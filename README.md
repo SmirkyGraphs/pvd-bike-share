@@ -7,8 +7,7 @@ This is **NOT** offical trip data from any of the providers.
 ## Prerequisites
 
 You must have Python 3 installed.  You can download it
-[here](https://www.python.org/downloads/).
-
+[here](https://www.python.org/downloads/).  
 To use AWS Lambda you must have an AWS account with IAM setup.
 
 ## AWS Cloud
