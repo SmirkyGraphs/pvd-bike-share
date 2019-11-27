@@ -16,8 +16,8 @@ I chose to use AWS Lambda to run the Python code collecting the data. The Lambda
 
 ## GBFS Location API
 
-- ~~[Jump Bikes](https://pvd.jumpbikes.com/opendata/gbfs.json)~~ (removed)
 - [Spin Scooters](https://web.spin.pm/api/gbfs/v1/providence/gbfs)
-- [VeoRide Scooters]() (unknown)
+- [VeoRide Scooters](https://share.veoride.com/api/share/gbfs/free_bike_status?area_name=providence)
+- ~~[Jump Bikes](https://pvd.jumpbikes.com/opendata/gbfs.json)~~ (removed)
 - ~~[Lime Scooters](https://data.lime.bike/api/partners/v1/gbfs/providence/gbfs.json)~~ (removed)
 - ~~[Bird Scooters](https://mds.bird.co/gbfs/providence/free_bikes)~~ (removed)
