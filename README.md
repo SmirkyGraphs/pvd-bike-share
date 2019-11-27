@@ -8,7 +8,9 @@ This is **NOT** offical trip data from any of the providers.
 
 You must have Python 3 installed.  You can download it
 [here](https://www.python.org/downloads/).  
-To use AWS Lambda you must have an AWS account with IAM setup.
+
+To use AWS Lambda you must have an AWS account with IAM setup.</br>
+To download the files from your s3 bucket you will need AWS CLI.
 
 ## AWS Cloud
 
