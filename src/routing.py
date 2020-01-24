@@ -122,7 +122,7 @@ def process_details(data, trip_id):
 
     return df
 
-class process_worker(Thread, req_type):
+class process_worker(Thread):
     def __init__(self, queue, req_type):
         Thread.__init__(self)
         self.queue = queue
@@ -135,12 +135,12 @@ class process_worker(Thread, req_type):
             print(f'[status] queue size: {self.queue.qsize()}' + ' '*10, end='\r')
             try:
                 data = request_routes(routes)
-                for trip_id, json_data in data.items():
+                for trip_id, route_data in data.items():
                     if self.req_type == 'json':
-                        df = process_details(json_data, trip_id)
+                        df = process_details(route_data, trip_id)
                         frames.append(df)
                     else:
-                        gdf = process_routes(gpx_data, trip_id)
+                        gdf = process_routes(route_data, trip_id)
                         frames.append(gdf)
             except:
                 continue
@@ -148,12 +148,12 @@ class process_worker(Thread, req_type):
             finally:
                 self.queue.task_done()
 
-def routing(df, req_type, veh_type):
+def routing(df, req_type, veh_type, workers):
     # make list for data
+    global frames
     frames = []
 
     # load data & chunk
-    df = pd.read_csv('../data/interim/bike_trips_clean.csv')
     df_chunks = [df[i::200] for i in range(200)]
     print(f'[status] total chunks: {len(df_chunks)}')
 
@@ -161,11 +161,11 @@ def routing(df, req_type, veh_type):
     queue = Queue()
 
     # Create worker threads
-    for x in range(20):
-        print(f'[status] worker: {x + 1}')
+    for x in range(workers):   
         worker = process_worker(queue, req_type)
         worker.daemon = True
         worker.start()
+    print(f'[status] {workers} workers', end='\n\n')
 
     # Put the tasks into the queue as a tuple
     for chunk in df_chunks:
@@ -183,11 +183,7 @@ def routing(df, req_type, veh_type):
 
     if req_type == 'json':
         df = df.reset_index(drop=True)
-        df.to_csv('../data/clean/jump_bike_route_details.csv', index=False)
-
         return df
     else:
         gdf = gpd.GeoDataFrame(df, geometry=df['geometry']).reset_index()
-        gdf.to_file("../data/spatial/full_bike_routes.geojson", driver='GeoJSON')
-
         return gdf
