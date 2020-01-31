@@ -67,28 +67,6 @@ def pivot_trips(df):
 
     return trips
 
-def remove_out_state(trips):
-    print('[status] removing out of state trips')
-    # remove trips from outside of RI
-    mask = gpd.read_file('./data/files/ri_map.geojson')
-    mask = mask['geometry'][0]
-
-    trips['filter'] = True
-    for i, row in trips.iterrows():
-        start = Point(row['lon_start'], row['lat_start'])
-        end = Point(row['lon_end'], row['lat_end'])
-
-        if not start.within(mask):
-            trips.at[i, 'filter'] = False
-
-        if not end.within(mask):
-            trips.at[i, 'filter'] = False
-
-    trips = trips[trips['filter'] == True]
-    trips = trips.drop(columns='filter')
-    
-    return trips
-
 def classify_battery(trips):
     print('[status] adding charged trips')
     # convert battery to float
@@ -99,6 +77,44 @@ def classify_battery(trips):
     trips.loc[(trips['battery_end'] - trips['battery_start']) > 0.1, 'type'] = 'charge'
 
     return trips
+
+def remove_out_state(gdf):
+    print('[status] removing out of state trips')
+
+    # remove trips from outside of ri
+    mask = gpd.read_file('./data/files/ri_map.geojson')
+    mask = mask['geometry'][0]
+    gdf = gdf[gdf['geometry'].within(mask)]
+    
+    return gdf
+
+def join_neighbor(gdf):
+    print('[status] adding neighborhood')
+    
+    # adds neighborhood column
+    mask = gpd.read_file('./data/files/neighborhoods.geojson')
+    mask = mask[['lname', 'geometry']]
+    mask = mask.rename(columns={'lname': 'neghbor'})
+
+    # join and remove index_right
+    gdf = gpd.tools.sjoin(gdf, mask, how="left")
+    df.drop('index_right', axis=1, inplace=True)
+
+    return gdf
+
+def join_ward(gdf):
+    print('[status] adding ward')
+    
+    # adds ward column
+    mask = gpd.read_file('./data/files/wards.geojson')
+    mask = mask[['ward', 'geometry']]
+    mask['ward'] = 'ward_' + mask['ward']
+
+    # join and remove index_right
+    gdf = gpd.tools.sjoin(gdf, mask, how="left")
+    df.drop('index_right', axis=1, inplace=True)
+    
+    return gdf
 
 def create_trips(files, remove=None):
     # combine json files
@@ -161,11 +177,21 @@ def create_trips(files, remove=None):
     df['lat'] = df['lat'].astype(float)
     df['lon'] = df['lon'].astype(float)
 
+    # get point geom for spatial work
+    points = [Point(xy) for xy in zip(df['lon'], df['lat'])]
+    df = gpd.GeoDataFrame(df, geometry=points)
+    df.crs = {"init": "epsg:4326"}
+
+    # perform spatial joins
+    df = remove_out_state(df)
+    df = join_neighbor(df)
+    df = join_ward(df)
+
+    # remove geometry
+    df.drop('geometry', axis=1, inplace=True)
+    
     # pivot on trip_id (starts -> end) 
     df = pivot_trips(df)
-
-    # remove out of state 
-    df = remove_out_state(df)
 
     # add battery info (jump only)
     if 'battery_start' in list(df):
