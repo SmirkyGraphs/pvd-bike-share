@@ -50,9 +50,8 @@ def pivot_trips(df):
     df = df.sort_values(by=['bike_id', 'timestamp'], ascending=[False, True]).reset_index(drop=True)
     df['timestamp'] = df['timestamp'].apply(lambda x: pd.Timestamp(x, unit='s', tz='US/Eastern'))
 
-    # filter out non-trips & pivot with start & end
-    trips = df[df['trip'].notnull()]
-    trips = trips.pivot(columns='trip', index='trip_id')
+    # pivot with start & end
+    trips = df.pivot(columns='trip', index='trip_id')
 
     # rename columns and reset index
     col_one = trips.columns.get_level_values(0).astype(str)
@@ -84,6 +83,13 @@ def remove_out_state(gdf):
     # remove trips from outside of ri
     mask = gpd.read_file('./data/files/ri_map.geojson')
     mask = mask['geometry'][0]
+
+    # start location
+    gdf['geometry'] = gdf['geometry_start']
+    gdf = gdf[gdf['geometry'].within(mask)]
+    
+    # end location
+    gdf['geometry'] = gdf['geometry_end']
     gdf = gdf[gdf['geometry'].within(mask)]
     
     return gdf
@@ -98,7 +104,7 @@ def join_neighbor(gdf):
 
     # join and remove index_right
     gdf = gpd.tools.sjoin(gdf, mask, how="left")
-    df.drop('index_right', axis=1, inplace=True)
+    gdf.drop('index_right', axis=1, inplace=True)
 
     return gdf
 
@@ -108,11 +114,10 @@ def join_ward(gdf):
     # adds ward column
     mask = gpd.read_file('./data/files/wards.geojson')
     mask = mask[['ward', 'geometry']]
-    mask['ward'] = 'ward_' + mask['ward']
 
     # join and remove index_right
     gdf = gpd.tools.sjoin(gdf, mask, how="left")
-    df.drop('index_right', axis=1, inplace=True)
+    gdf.drop('index_right', axis=1, inplace=True)
     
     return gdf
 
@@ -177,21 +182,27 @@ def create_trips(files, remove=None):
     df['lat'] = df['lat'].astype(float)
     df['lon'] = df['lon'].astype(float)
 
+    # remove non trips
+    df = df[df['trip'].notnull()]
+
     # get point geom for spatial work
     points = [Point(xy) for xy in zip(df['lon'], df['lat'])]
     df = gpd.GeoDataFrame(df, geometry=points)
     df.crs = {"init": "epsg:4326"}
 
     # perform spatial joins
-    df = remove_out_state(df)
     df = join_neighbor(df)
     df = join_ward(df)
-
-    # remove geometry
-    df.drop('geometry', axis=1, inplace=True)
     
     # pivot on trip_id (starts -> end) 
     df = pivot_trips(df)
+
+    # drop out of state
+    df = remove_out_state(df)
+
+    # remove geometry
+    geom = ['geometry_start', 'geometry_end', 'geometry']
+    df.drop(geom, axis=1, inplace=True)
 
     # add battery info (jump only)
     if 'battery_start' in list(df):
