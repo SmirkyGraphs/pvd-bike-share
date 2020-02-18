@@ -69,11 +69,11 @@ def main():
     start_server(graphhopper)
 
     # route trips & save geojson
-    gdf = routing(df, 'gpx', 'bike', workers)
+    gdf = routing(df, 'gpx', 'car', workers)
     gdf.to_file(f"./data/clean/{provider}/full_bike_routes.geojson", driver='GeoJSON')
 
     # route trip details & save
-    df = routing(df, 'json', 'bike', workers)
+    df = routing(df, 'json', 'car', workers)
     df.to_csv(f'./data/interim/{provider}/trip_route_details.csv', index=False)
 
 if __name__ == '__main__':
