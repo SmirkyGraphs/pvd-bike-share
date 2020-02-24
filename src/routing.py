@@ -91,7 +91,7 @@ def process_routes(gpx_data, trip_id):
     df = pd.DataFrame(tracks_frame)
     df['trip_id'] = str(trip_id)
     
-    #zip the coordinates into a point object and convert to gdf
+    # zip the coordinates into a point object and convert to gdf
     geometry = [Point(xy) for xy in zip(df.X, df.Y)]
     gdf = gpd.GeoDataFrame(df, geometry=geometry)
 
