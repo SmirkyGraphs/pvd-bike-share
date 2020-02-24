@@ -4,7 +4,6 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 
-
 def combine_json(files):
     print('[status] merging json files')
     frames = []
@@ -18,17 +17,16 @@ def combine_json(files):
         # load files & get timestamp
         df = pd.read_json(file, orient='records')
 
+        # get timestamp
         if 'lastUpdated' in list(df):
             df = df.rename(columns={'lastUpdated':'last_updated'})
-        if 'jump_vehicle_type' in list(df):
-            df = df.rename(columns={'jump_vehicle_type':'vehicle_type'})
-
         timestamp = df['last_updated'][0]
 
         # flatten json data into table & add timestamp
         df = pd.io.json.json_normalize(df.data[0])
         df['timestamp'] = timestamp
 
+        # check if cammelCase (veoride)
         if 'bikeId' in list(df):
             rename = {
                 'isDisabled': 'is_disabled',
@@ -36,6 +34,10 @@ def combine_json(files):
                 'bikeId': 'bike_id'
             }
             df = df.rename(columns=rename)
+
+        # check if jump & fix naming
+        if 'jump_vehicle_type' in list(df):
+            df = df.rename(columns={'jump_vehicle_type':'vehicle_type'})
 
         # add file to frames 
         frames.append(df)
@@ -217,3 +219,4 @@ def create_trips(files, remove=None):
     df['type'] = df['type'].fillna('trip')
 
     return df
+
