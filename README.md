@@ -30,7 +30,7 @@ example: `python main.py --provider lime --sync`
 
 I chose to use AWS Lambda to run the Python code collecting the data. The Lambda script ran every 5 minutes by a CloudWatch Events trigger. The Python script would then process the location gbfs feed api into a `.json` file and add it into an AWS S3 Bucket.
 
-## Data Creation
+## Data Features
 
 <details>
     <summary><b>trips_clean.csv</b></summary>
