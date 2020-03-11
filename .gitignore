@@ -129,3 +129,15 @@ dmypy.json
 data/raw/**/**/*.json
 data/interim/**/**/*.csv
 data/clean/**/**/*.csv
+data/clean/pvd-bird-scooters/full_bike_routes.geojson
+data/clean/pvd-bird-scooters/straight_lines.geojson
+data/clean/pvd-jump-bikes/straight_lines.geojson
+data/clean/pvd-lime-scooters/full_bike_routes.geojson
+data/clean/pvd-lime-scooters/straight_lines.geojson
+data/clean/pvd-spin-scooters/full_bike_routes.geojson
+data/clean/pvd-veoride-scooters/full_bike_routes.geojson
+data/clean/pvd-veoride-scooters/straight_lines.geojson
+data/files/jump_station_information.json
+notebooks/clean_station_status.ipynb
+notebooks/number_of_rows.ipynb
+notebooks/Untitled.ipynb

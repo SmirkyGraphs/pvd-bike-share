@@ -76,6 +76,14 @@ def merge_details(provider):
 
     # fill un-routable paths with straight line distance
     df.loc[df['distance']==0, 'distance'] = df.apply(straight_distance, axis=1)
+
+    # convert distance from meters to feet
+    df['distance'] = df['distance'] * 3.2808
+
+    # get speed (mph)
+    df['speed_mph'] = (df['distance'] / df['duration_min'])/88
+
+    # save file
     df.to_csv(f'./data/clean/{provider}/trips_clean.csv', index=False)
 
     return df
@@ -94,16 +102,40 @@ def daily_weather(df):
 
     return df
 
+def neighborhood_trips(df):
+    # get neighborhood start/end and %
+    s1 = df.groupby(['neghbor_start', 'neghbor_end']).size()
+    s2 = (s1 / s1.groupby(level=0).sum())
+
+    neighbor = pd.concat([s1, s2], axis=1).reset_index()
+    neighbor = neighbor.rename(columns={0:'count', 1:'percent'})
+
+    return neighbor
+
+def ward_trips(df):
+    # get ward start/end and %
+    s1 = df.groupby(['ward_start', 'ward_end']).size()
+    s2 = (s1 / s1.groupby(level=0).sum())
+
+    ward = pd.concat([s1, s2], axis=1).reset_index()
+    ward = ward.rename(columns={0:'count', 1:'percent'})
+
+    return ward
+
 def run_reports(df, provider):
-    df['timestamp_start'] = pd.to_datetime(df['timestamp_start'])
+    df['timestamp_start'] = pd.to_datetime(df['timestamp_start'], utc=True).dt.tz_convert('US/Eastern')
     weather = pd.read_csv('./data/files/daily_weather.csv')
     weather = daily_weather(weather)
 
     lines = make_lines(df)
     daily = daily_trips(df, weather)
     bike_info = bike_details(df)
+    neighbor = neighborhood_trips(df)
+    ward = ward_trips(df)
 
     # save files
     bike_info.to_csv(f'./data/clean/{provider}/bike_details_clean.csv', index=False)
     daily.to_csv(f'./data/clean/{provider}/daily_trips_clean.csv', index=False)
+    ward.to_csv(f'./data/clean/{provider}/ward_trips_clean.csv', index=False)
+    neighbor.to_csv(f'./data/clean/{provider}/neighborhood_trips_clean.csv', index=False)
     lines.to_file(f"./data/clean/{provider}/straight_lines.geojson", driver='GeoJSON')
