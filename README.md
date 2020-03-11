@@ -6,13 +6,12 @@ The goal of this project is to collect data from different bikeshare/scooter pro
 
 ## Prerequisites
 
-You must have Python 3 installed.  You can download it
+You must have **Python 3** installed.  You can download it
 [here](https://www.python.org/downloads/).  
+Routing requires **Graphhopper**, **OpenStreetMap**.
 
 To use AWS Lambda you must have an AWS account with [IAM setup](https://aws.amazon.com/iam/).</br>
 To download the files from your s3 bucket you will need [AWS CLI](https://aws.amazon.com/cli/).
-
-Routing requires Graphhopper, OpenStreetMap layer.
 
 ## Usage
 
