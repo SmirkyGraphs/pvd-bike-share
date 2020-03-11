@@ -81,7 +81,6 @@ def classify_battery(trips):
 
 def remove_out_state(gdf):
     print('[status] removing out of state trips')
-
     # remove trips from outside of ri
     mask = gpd.read_file('./data/files/ri_map.geojson')
     mask = mask['geometry'][0]
@@ -98,7 +97,6 @@ def remove_out_state(gdf):
 
 def join_neighbor(gdf):
     print('[status] adding neighborhood')
-    
     # adds neighborhood column
     mask = gpd.read_file('./data/files/neighborhoods.geojson')
     mask = mask[['lname', 'geometry']]
@@ -112,7 +110,6 @@ def join_neighbor(gdf):
 
 def join_ward(gdf):
     print('[status] adding ward')
-    
     # adds ward column
     mask = gpd.read_file('./data/files/wards.geojson')
     mask = mask[['ward', 'geometry']]
