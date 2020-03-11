@@ -36,6 +36,16 @@ def clean_trips(provider, veh_type, drop_cols=None):
 
     return df
 
+def remove_spatial(provider):
+    paths = [
+        f'./data/clean/{provider}/full_bike_routes.geojson',
+        f'./data/clean/{provider}/straight_lines.geojson'
+    ]
+
+    for file_path in paths:
+        if file_path.is_file():
+            file_path.unlink()
+
 # map provider to folder
 map_folder = {
     'jump': 'pvd-jump-bikes',
@@ -68,9 +78,14 @@ def main():
     # start server
     start_server(graphhopper)
 
-    # route trips
+    # make paths
+    Path(f'./data/clean/{provider}/').mkdir(parents=True, exist_ok=True)
+    Path(f'./data/interim/{provider}/').mkdir(parents=True, exist_ok=True) 
+
+    # route trips (delete if exists)
+    file_path = f'./data/clean/{provider}/full_bike_routes.geojson'
     gdf = routing(trips, 'gpx', 'car', workers)
-    gdf.to_file(f"./data/clean/{provider}/full_bike_routes.geojson", driver='GeoJSON')
+    gdf.to_file(file_path, driver='GeoJSON')
 
     # route trip details & save
     details = routing(trips, 'json', 'car', workers)
