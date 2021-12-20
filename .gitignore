@@ -141,3 +141,5 @@ data/files/jump_station_information.json
 notebooks/clean_station_status.ipynb
 notebooks/number_of_rows.ipynb
 notebooks/Untitled.ipynb
+data/clean/pvd-jump-bikes/clean_bike_routes.geojson
+data/clean/pvd-jump-bikes/report_trip_lines_straight.geojson

@@ -2,16 +2,58 @@
 import json
 import requests
 import pandas as pd
+import subprocess
+import time
 
 # for spatial handling
 import gpxpy
 import geopandas as gpd
-from shapely.geometry import Point, LineString, shape
+from shapely.geometry import Point, LineString
 
 # for multi-threading
 from queue import Queue
 from threading import Thread
 
+# ignore sapely 2.0 depricated warning
+from warnings import filterwarnings
+filterwarnings("ignore")
+
+# path to graphhopper server file
+path = 'j:/files/gis/graphhopper/graphhopper-0.12.0/'
+
+# list to hold requests
+frames = []
+
+def start_graphhopper():
+    cmd = 'cmd.exe /c start run_server.bat'
+    res = subprocess.Popen(cmd, cwd=path, shell=True)
+    time.sleep(15)
+
+class RouteWorker(Thread):
+    def __init__(self, queue, req_type):
+        Thread.__init__(self)
+        self.queue = queue
+        self.req_type = req_type
+
+    def run(self):
+        while True:
+            # Get the work from the queue and expand the tuple
+            routes = self.queue.get()
+            print(f'[status] queue size: {self.queue.qsize()}' + ' '*10, end='\r')
+            try:
+                data = request_routes(routes)
+                for trip_id, route_data in data.items():
+                    if self.req_type == 'json':
+                        df = process_details(route_data, trip_id)
+                        frames.append(df)
+                    else:
+                        gdf = process_routes(route_data, trip_id)
+                        frames.append(gdf)
+            except:
+                continue
+                
+            finally:
+                self.queue.task_done()
 
 def generate_route_requests(df, req_type, veh_type):
     """ generates url to request a route between 2 points
@@ -23,7 +65,7 @@ def generate_route_requests(df, req_type, veh_type):
     Returns:
         string: a url to send to local server
     """
-    url = 'http://localhost:8989/route?'
+    url = 'http://127.0.0.1:8989/route?'
     url_end = f'&type={req_type}&instructions=false&vehicle={veh_type}'
 
     route_requests = {}
@@ -54,16 +96,19 @@ def request_routes(routes):
     """ sends generated url to server and gets dict of gpx information.
 
     Args:
-        routes: url of route between 2 points
+        routes: url of route between 2 pointss
 
     Returns:
         dictioanry of gpx information
     """
     gpx_data = {}
     for trip_id, req in routes.items():
-        r = requests.get(req)
+        try:
+            r = requests.get(req)
+        except Exception as e:
+            print(e)
         gpx_data[trip_id] = (r.content).decode('utf-8')
-    
+
     return gpx_data
 
 def process_routes(gpx_data, trip_id):
@@ -115,62 +160,35 @@ def process_details(data, trip_id):
     data = data['paths']
 
     df = pd.DataFrame.from_dict(data)
-    df['trip_id'] = trip_id
+    df['trip_id'] = int(trip_id)
 
     keep_cols = ['trip_id', 'distance', 'time']
     df = df[keep_cols]
 
     return df
 
-class process_worker(Thread):
-    def __init__(self, queue, req_type):
-        Thread.__init__(self)
-        self.queue = queue
-        self.req_type = req_type
-
-    def run(self):
-        while True:
-            # Get the work from the queue and expand the tuple
-            routes = self.queue.get()
-            print(f'[status] queue size: {self.queue.qsize()}' + ' '*10, end='\r')
-            try:
-                data = request_routes(routes)
-                for trip_id, route_data in data.items():
-                    if self.req_type == 'json':
-                        df = process_details(route_data, trip_id)
-                        frames.append(df)
-                    else:
-                        gdf = process_routes(route_data, trip_id)
-                        frames.append(gdf)
-            except:
-                continue
-                
-            finally:
-                self.queue.task_done()
-
-def routing(df, req_type, veh_type, workers):
-    # make list for data
+def routing_pipeline(df, req_type, veh_type, workers):
     global frames
+    if len(frames) == 0:
+        start_graphhopper()
+
     frames = []
 
     # load data & chunk
     df_chunks = [df[i::200] for i in range(200)]
-    print(f'[status] total chunks: {len(df_chunks)}')
-
+    
     # Create a queue to communicate with the worker threads
     queue = Queue()
 
     # Create worker threads
     for x in range(workers):   
-        worker = process_worker(queue, req_type)
+        worker = RouteWorker(queue, req_type)
         worker.daemon = True
         worker.start()
-    print(f'[status] {workers} workers', end='\n\n')
 
     # Put the tasks into the queue as a tuple
     for chunk in df_chunks:
         routes = generate_route_requests(chunk, req_type, veh_type)
-
         for trip_id, route in routes.items():
             route_requests = {}
             route_requests[trip_id] = route
@@ -178,7 +196,6 @@ def routing(df, req_type, veh_type, workers):
 
     # Causes the main thread to wait for the queue to finish processing all the tasks
     queue.join()
-
     df = pd.concat(frames)
 
     if req_type == 'json':
