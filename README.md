@@ -19,7 +19,8 @@ Code is run from the command line with one requirement<br>
 providers list: jump | bird | lime | veoride | spin
 
 **--provider** a bike/scooter company.<br>
-Optional **--sync** to download newer files from s3 bucket.
+Optional **-s** or **--sync** to download newer files from s3 bucket.<br>
+Optional **-t** or **--test** runs a small sample of 2,000 files through the pipeline.
 
 example: `python main.py --provider jump`
 
@@ -102,6 +103,14 @@ I chose to use AWS Lambda to run the Python code collecting the data. The Lambda
 - ~~[Jump Bikes](https://pvd.jumpbikes.com/opendata/gbfs.json)~~ (removed)
 - ~~[Lime Scooters](https://data.lime.bike/api/partners/v1/gbfs/providence/gbfs.json)~~ (removed)
 - ~~[Bird Scooters](https://mds.bird.co/gbfs/providence/free_bikes)~~ (removed)
+
+## Creations With Data
+
+- [JUMP Tableau Dashboard](https://public.tableau.com/app/profile/smirkygraphs/viz/JumpBikeTrips-ProvidenceRI/pvd-jump-bikes)
+- [Collection of Maps](https://ivizri.com/posts/2019/09/jump-bike-maps/)
+    - [all routed trips](https://i.imgur.com/yKpTmQh.png)
+    - [all straight lines](https://imgur.com/JQDJYLO.png)
+    - [pvd-fest routed trips](https://imgur.com/TtbMAmA.png)
 
 ## References
 
