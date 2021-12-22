@@ -49,7 +49,7 @@ def make_trips(df):
 def duplicate_start_end(df):
     # get timestamps that are both a start & stop to duplicate
     df['dupe'] = (
-                (df['bike_id'] == df['bike_id'].shift())
+              (df['bike_id'] == df['bike_id'].shift())
             & (df['bike_id'] == df['bike_id'].shift(-1))
             & (df['trip'] == 'end')
             & (df['trip'].shift(-1) == 'end')
