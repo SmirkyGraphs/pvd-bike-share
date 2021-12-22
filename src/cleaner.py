@@ -47,22 +47,22 @@ def make_trips(df):
 
 @log_pipeline
 def duplicate_start_end(df):
-        # get timestamps that are both a start & stop to duplicate
-        df['dupe'] = (
-                 (df['bike_id'] == df['bike_id'].shift())
-               & (df['bike_id'] == df['bike_id'].shift(-1))
-               & (df['trip'] == 'end')
-               & (df['trip'].shift(-1) == 'end')
-        )
+    # get timestamps that are both a start & stop to duplicate
+    df['dupe'] = (
+                (df['bike_id'] == df['bike_id'].shift())
+            & (df['bike_id'] == df['bike_id'].shift(-1))
+            & (df['trip'] == 'end')
+            & (df['trip'].shift(-1) == 'end')
+    )
 
-        dupe = df[df['dupe'] == True].copy()
-        dupe['trip'] = 'start'
+    dupe = df[df['dupe'] == True].copy()
+    dupe['trip'] = 'start'
 
-        # merge rows that needed to be duplicated
-        df = df.append(dupe, sort=False)
-        df = df.sort_values(by=['bike_id', 'timestamp'], ascending=[False, True]).reset_index(drop=True)
+    # merge rows that needed to be duplicated
+    df = df.append(dupe, sort=False)
+    df = df.sort_values(by=['bike_id', 'timestamp'], ascending=[False, True]).reset_index(drop=True)
 
-        return df
+    return df
 
 @log_pipeline
 def add_trip_id(df):
